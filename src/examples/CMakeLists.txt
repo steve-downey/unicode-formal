@@ -7,7 +7,7 @@ target_sources(
   PRIVATE
   main.cpp)
 
-target_link_libraries(main scratch)
+target_link_libraries(main unicode_formal)
 
 install(
   TARGETS main

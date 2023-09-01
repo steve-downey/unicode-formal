@@ -28,7 +28,7 @@ l#+BLOG: sdowney
 
 An outline of a template that provides an automated workflow driving a CMake project in a docker container.
 
-This post must be read in concert with https://github.com/steve-downey/scratch of which it is part.
+This post must be read in concert with https://github.com/steve-downey/unicode-formal of which it is part.
 
 * Routine process should be automated
 

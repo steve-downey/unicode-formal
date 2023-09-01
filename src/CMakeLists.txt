@@ -1,2 +1,2 @@
-add_subdirectory(scratch)
+add_subdirectory(unicode_formal)
 add_subdirectory(examples)
