@@ -3,3 +3,5 @@ cmake.bld
 compile_commands.json
 .update-submodules
 .use-docker
+/.cache/
+/build/
