@@ -35,18 +35,18 @@ constexpr bool is_bmp(char32_t codepoint) noexcept;
 constexpr bool is_supplementary(char32_t codepoint) noexcept;
 
 /**
- * Is this code point a lead surrogate (U+d800..U+dbff)?
+ * Is this code point a high surrogate (U+d800..U+dbff)?
  * @param codepoint 32-bit code point
  * @return true or false
  */
-constexpr bool is_lead(char32_t codepoint) noexcept;
+constexpr bool is_high_surrogate(char32_t codepoint) noexcept;
 
 /**
- * Is this code point a trail surrogate (U+dc00..U+dfff)?
+ * Is this code point a low surrogate (U+dc00..U+dfff)?
  * @param codepoint 32-bit code point
  * @return true or false
  */
-constexpr bool is_trail(char32_t codepoint) noexcept;
+constexpr bool is_low_surrogate(char32_t codepoint) noexcept;
 
 /**
  * Is this code point a surrogate (U+d800..U+dfff)?
@@ -55,22 +55,6 @@ constexpr bool is_trail(char32_t codepoint) noexcept;
  */
 constexpr bool is_surrogate(char32_t codepoint) noexcept;
 
-// The following are ICU API that are unsafe but provide no benfit
-// /**
-//  * Is this code point a lead surrogate (U+d800..U+dbff)?
-//  * @param codepoint 32-bit code point
-//  * @return true or false
-//  * @pre is_surrogate(codepoint)
-//  */
-//  constexpr bool is_surrogate_lead(char32_t codepoint) noexcept;
-
-// /**
-//  * Is this code point a trail surrogate (U+dc00..U+dfff)?
-//  * @param codepoint 32-bit code point
-//  * @return true or false
-//  * @pre is_surrogate(codepoint)
-//  */
-//  constexpr bool is_surrogate_trail(char32_t codepoint) noexcept;
 
 // utf-16
 
@@ -82,18 +66,18 @@ constexpr bool is_surrogate(char32_t codepoint) noexcept;
 constexpr bool is_single(char16_t codeunit) noexcept;
 
 /**
- * Is this code unit a lead surrogate (U+d800..U+dbff)?
+ * Is this code unit a high surrogate (U+d800..U+dbff)?
  * @param codeunit 16-bit code unit
  * @return true or false
  */
-constexpr bool is_lead(char16_t codeunit) noexcept;
+constexpr bool is_high_surrogate(char16_t codeunit) noexcept;
 
 /**
- * Is this code unit a trail surrogate (U+dc00..U+dfff)?
+ * Is this code unit a low surrogate (U+dc00..U+dfff)?
  * @param codeunit 16-bit code unit
  * @return true or false
  */
-constexpr bool is_trail(char16_t codeunit) noexcept;
+constexpr bool is_low_surrogate(char16_t codeunit) noexcept;
 
 /**
  * Is this code unit a surrogate (U+d800..U+dfff)?
@@ -102,11 +86,6 @@ constexpr bool is_trail(char16_t codeunit) noexcept;
  */
 constexpr bool is_surrogate(char16_t codeunit) noexcept;
 
-// The following are ICU API that are unsafe but provide no benfit
-
-//  constexpr bool is_surrogate_lead(char16_t codeunit) noexcept;
-
-//  constexpr bool is_surrogate_trail(char16_t codeunit) noexcept;
 
 /**
  * Code point offset for surrogate pair calculation
@@ -115,33 +94,33 @@ constexpr unsigned long surrogate_offset() noexcept;
 
 /**
  * Calculate a supplementary code point value (U+10000..U+10ffff)
- * from a pair of its lead and trail surrogates.
+ * from a pair of its high and low surrogates.
  * The result is unspecified if the input values are not
- * lead and trail surrogates.
+ * high and low surrogates.
  *
- * @param lead lead surrogate (U+d800..U+dbff)
- * @param trail trail surrogate (U+dc00..U+dfff)
+ * @param high high surrogate (U+d800..U+dbff)
+ * @param low low surrogate (U+dc00..U+dfff)
  * @return supplementary code point (U+10000..U+10ffff)
  */
-constexpr char32_t get_supplementary(char32_t lead, char32_t trail) noexcept;
+constexpr char32_t get_supplementary(char32_t high, char32_t low) noexcept;
 
 /**
- * The lead surrogate code unit (0xd800..0xdbff) for a
+ * The high surrogate code unit (0xd800..0xdbff) for a
  * supplementary code point (0x10000..0x10ffff).
  * The result is unspecified if the code point is not assignable.
  * @param supplementary 32-bit code point
- * @return lead surrogate
+ * @return high surrogate
  */
-constexpr char16_t surrogate_lead(char32_t supplementary) noexcept;
+constexpr char16_t surrogate_high(char32_t supplementary) noexcept;
 
 /**
- * The trail surrogate code unit (0xdc00..0xdfff) for a
+ * The low surrogate code unit (0xdc00..0xdfff) for a
  * supplementary code point (0x10000..0x10ffff).
  * The result is unspecified if the code point is not assignable.
  * @param supplementary 32-bit code point
- * @return lead surrogate
+ * @return high surrogate
  */
-constexpr char16_t surrogate_trail(char32_t supplementary) noexcept;
+constexpr char16_t surrogate_low(char32_t supplementary) noexcept;
 
 /**
  * The number of char16_t code units necessary to encode the code point.
@@ -211,131 +190,113 @@ constexpr int utf8_length(char32_t codepoint) noexcept;
  * @return 4
  */
 constexpr int utf8_max_length() noexcept;
+} // namespace unicode_formal
 
 // Implementation
 
 // codepoint
-inline constexpr bool is_unicode_nonchar(char32_t codepoint) noexcept {
+inline constexpr bool unicode_formal::is_unicode_nonchar(char32_t codepoint) noexcept {
     return (codepoint >= 0xfdd0 &&
             (codepoint <= 0xfdef || (codepoint & 0xfffe) == 0xfffe) &&
             codepoint <= 0x10ffff);
 }
 
-inline constexpr bool is_unicode_char(char32_t codepoint) noexcept {
+inline constexpr bool unicode_formal::is_unicode_char(char32_t codepoint) noexcept {
     return (static_cast<uint32_t>(codepoint) < 0xd800 ||
             (0xdfff < codepoint && codepoint <= 0x10ffff &&
              !is_unicode_nonchar(codepoint)));
 }
 
-inline constexpr bool is_bmp(char32_t codepoint) noexcept {
+inline constexpr bool unicode_formal::is_bmp(char32_t codepoint) noexcept {
     return (static_cast<uint32_t>(codepoint) <= 0xffff);
 }
 
-inline constexpr bool is_supplementary(char32_t codepoint) noexcept {
+inline constexpr bool unicode_formal::is_supplementary(char32_t codepoint) noexcept {
     return (static_cast<uint32_t>(codepoint - 0x10000) <= 0xfffff);
 }
 
-inline constexpr bool is_lead(char32_t codepoint) noexcept {
+inline constexpr bool unicode_formal::is_high_surrogate(char32_t codepoint) noexcept {
     return ((codepoint & 0xfffffc00) == 0xd800);
 }
 
-inline constexpr bool is_trail(char32_t codepoint) noexcept {
+inline constexpr bool unicode_formal::is_low_surrogate(char32_t codepoint) noexcept {
     return ((codepoint & 0xfffffc00) == 0xdc00);
 }
 
-inline constexpr bool is_surrogate(char32_t codepoint) noexcept {
+inline constexpr bool unicode_formal::is_surrogate(char32_t codepoint) noexcept {
     return ((codepoint & 0xfffff800) == 0xd800);
 }
 
-// The following are ICU API that are unsafe but provide no benfit
-
-// inline constexpr bool is_surrogate_lead(char32_t codepoint) noexcept {
-//     return ((codepoint & 0x400) == 0);
-// }
-
-// inline constexpr bool is_surrogate_trail(char32_t codepoint) noexcept {
-//     return ((codepoint & 0x400) != 0);
-// }
 
 // UTF-16
-inline constexpr bool is_single(char16_t codeunit) noexcept {
+inline constexpr bool unicode_formal::is_single(char16_t codeunit) noexcept {
     return !is_surrogate(static_cast<char32_t>(codeunit));
 }
 
-inline constexpr bool is_lead(char16_t codeunit) noexcept {
+inline constexpr bool unicode_formal::is_high_surrogate(char16_t codeunit) noexcept {
     return ((codeunit & 0xfffffc00) == 0xd800);
 }
 
-inline constexpr bool is_trail(char16_t codeunit) noexcept {
+inline constexpr bool unicode_formal::is_low_surrogate(char16_t codeunit) noexcept {
     return ((codeunit & 0xfffffc00) == 0xdc00);
 }
 
-inline constexpr bool is_surrogate(char16_t codeunit) noexcept {
+inline constexpr bool unicode_formal::is_surrogate(char16_t codeunit) noexcept {
     return is_surrogate(static_cast<char32_t>(codeunit));
 }
 
-// The following are ICU API that are unsafe but provide no benfit
-
-// inline constexpr bool is_surrogate_lead(char16_t codeunit) noexcept {
-//     return (((codeunit)&0x400) == 0);
-// }
-
-// inline constexpr bool is_surrogate_trail(char16_t codeunit) noexcept {
-//     return (((codeunit)&0x400) != 0);
-// }
-
-inline constexpr unsigned long surrogate_offset() noexcept {
+inline constexpr unsigned long unicode_formal::surrogate_offset() noexcept {
     return ((0xd800 << 10UL) + 0xdc00 - 0x10000);
 }
 
-inline constexpr char32_t get_supplementary(char32_t lead,
+inline constexpr char32_t unicode_formal::get_supplementary(char32_t high,
                                             char32_t trail) noexcept {
-    return ((static_cast<char32_t>(lead) << 10UL) +
+    return ((static_cast<char32_t>(high) << 10UL) +
             static_cast<char32_t>(trail) - surrogate_offset());
 }
 
-inline constexpr char16_t surrogate_lead(char32_t supplementary) noexcept {
+inline constexpr char16_t unicode_formal::surrogate_high(char32_t supplementary) noexcept {
     return (((supplementary) >> 10) + 0xd7c0);
 }
 
-inline constexpr char16_t surrogate_trail(char32_t supplementary) noexcept {
+inline constexpr char16_t unicode_formal::surrogate_low(char32_t supplementary) noexcept {
     return (((supplementary)&0x3ff) | 0xdc00);
 }
 
-inline constexpr int utf16_length(char32_t codeunit) noexcept {
+inline constexpr int unicode_formal::utf16_length(char32_t codeunit) noexcept {
     return (static_cast<uint32_t>(codeunit) <= 0xffff ? 1 : 2);
 }
 
-inline constexpr int utf16_max_length() noexcept { return 2; }
+inline constexpr int unicode_formal::utf16_max_length() noexcept { return 2; }
 
 // UTF-8
 
-inline constexpr bool is_utf8_single(char8_t octet) noexcept {
-    return ((octet & 0x80) == 0);
+inline constexpr bool unicode_formal::is_utf8_single(char8_t octet) noexcept {
+    return ((octet & 0b10000000) == 0);
 }
 
-inline constexpr bool is_utf8_lead(char8_t octet) noexcept {
+inline constexpr bool unicode_formal::is_utf8_lead(char8_t octet) noexcept {
     return (static_cast<uint8_t>(octet - 0xc2) <= 0x32);
 }
 
-inline constexpr bool is_utf8_trail(char8_t octet) noexcept {
+inline constexpr bool unicode_formal::is_utf8_trail(char8_t octet) noexcept {
     return (static_cast<int8_t>(octet) < -0x40);
 }
 
-inline constexpr int count_utf8_trail_bytes(char8_t lead_byte) noexcept {
+inline constexpr int unicode_formal::count_utf8_trail_bytes(char8_t lead_byte) noexcept {
     return is_utf8_lead(lead_byte)
-               ? (static_cast<uint8_t>(lead_byte) >= 0xe0) +
-                     (static_cast<uint8_t>(lead_byte) >= 0xf0) + 1
+               ? (static_cast<uint8_t>(lead_byte) >= 0b11100000) +
+                     (static_cast<uint8_t>(lead_byte) >= 0b11110000) + 1
                : 0;
 }
 
-inline constexpr int count_utf8_trail_bytes_unsafe(char8_t lead_byte) noexcept {
-    return ((static_cast<uint8_t>(lead_byte) >= 0xc2) +
-            (static_cast<uint8_t>(lead_byte) >= 0xe0) +
-            (static_cast<uint8_t>(lead_byte) >= 0xf0));
+inline constexpr int unicode_formal::count_utf8_trail_bytes_unsafe(char8_t lead_byte) noexcept {
+    return ((static_cast<uint8_t>(lead_byte) >= 0b11000010) +
+            (static_cast<uint8_t>(lead_byte) >= 0b11100000) +
+            (static_cast<uint8_t>(lead_byte) >= 0b11110000));
 }
 
-inline constexpr int utf8_length(char32_t codepoint) noexcept {
+inline constexpr int unicode_formal::utf8_length(char32_t codepoint) noexcept {
     if (static_cast<uint32_t>(codepoint) <= 0x7f) {
         return 1;
     } else if (static_cast<uint32_t>(codepoint) <= 0x7ff) {
@@ -351,8 +312,7 @@ inline constexpr int utf8_length(char32_t codepoint) noexcept {
     return 4;
 }
 
-inline constexpr int utf8_max_length() noexcept { return 4; }
+inline constexpr int unicode_formal::utf8_max_length() noexcept { return 4; }
 
-} // namespace unicode_formal
 
 #endif
