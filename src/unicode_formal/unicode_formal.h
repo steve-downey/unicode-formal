@@ -195,9 +195,10 @@ struct codepoint_constants {
     constexpr static uint32_t high_surrogate_start = 0xd800;
     constexpr static uint32_t low_surrogate_start  = 0xdc00;
     constexpr static uint32_t end_bmp_scalar       = 0xdfff;
-    constexpr static uint32_t high_bmp             = 0xffff;
+    constexpr static uint32_t end_bmp              = 0xffff;
     constexpr static uint32_t max_codepoint        = 0x10ffff;
     constexpr static uint32_t supplemental_start   = 0x10000;
+    constexpr static uint32_t surrogate_mask       = 0xfffffc00;
 };
 
 struct utf8_constants {
@@ -224,7 +225,7 @@ unicode_formal::is_unicode_char(char32_t codepoint) noexcept {
 }
 
 inline constexpr bool unicode_formal::is_bmp(char32_t codepoint) noexcept {
-    return (static_cast<uint32_t>(codepoint) <= codepoint_constants::high_bmp);
+    return (static_cast<uint32_t>(codepoint) <= codepoint_constants::end_bmp);
 }
 
 inline constexpr bool
@@ -236,13 +237,13 @@ unicode_formal::is_supplementary(char32_t codepoint) noexcept {
 
 inline constexpr bool
 unicode_formal::is_high_surrogate(char32_t codepoint) noexcept {
-    return ((codepoint & 0xfffffc00) ==
+    return ((codepoint & codepoint_constants::surrogate_mask) ==
             codepoint_constants::high_surrogate_start);
 }
 
 inline constexpr bool
 unicode_formal::is_low_surrogate(char32_t codepoint) noexcept {
-    return ((codepoint & 0xfffffc00) ==
+    return ((codepoint & codepoint_constants::surrogate_mask) ==
             codepoint_constants::low_surrogate_start);
 }
 
@@ -259,13 +260,13 @@ inline constexpr bool unicode_formal::is_single(char16_t codeunit) noexcept {
 
 inline constexpr bool
 unicode_formal::is_high_surrogate(char16_t codeunit) noexcept {
-    return ((codeunit & 0xfffffc00) ==
+    return ((codeunit & codepoint_constants::surrogate_mask) ==
             codepoint_constants::high_surrogate_start);
 }
 
 inline constexpr bool
 unicode_formal::is_low_surrogate(char16_t codeunit) noexcept {
-    return ((codeunit & 0xfffffc00) ==
+    return ((codeunit & codepoint_constants::surrogate_mask) ==
             codepoint_constants::low_surrogate_start);
 }
 
@@ -298,7 +299,7 @@ unicode_formal::surrogate_low(char32_t supplementary) noexcept {
 }
 
 inline constexpr int unicode_formal::utf16_length(char32_t codeunit) noexcept {
-    return (static_cast<uint32_t>(codeunit) <= codepoint_constants::high_bmp
+    return (static_cast<uint32_t>(codeunit) <= codepoint_constants::end_bmp
                 ? 1
                 : 2);
 }
@@ -349,7 +350,7 @@ inline constexpr int unicode_formal::utf8_length(char32_t codepoint) noexcept {
                    codepoint_constants::max_codepoint) {
         return 0;
     } else if (static_cast<uint32_t>(codepoint) <=
-               codepoint_constants::high_bmp) {
+               codepoint_constants::end_bmp) {
         return 3;
     }
     return 4;
