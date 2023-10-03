@@ -7,55 +7,70 @@ on:
       - master
 
 jobs:
-  Test:
+  build:
+    name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os:
-          - ubuntu-22.04
-        compiler:
-          - llvm
-          - gcc
-          # you can specify the version after `-` like `llvm-13.0.0`.
-        CMAKE_GENERATOR:
-          - "Ninja Multi-Config"
-
         include:
-          # Inject GCOV variable for gcc
-          - compiler: gcc
-            GCOV: gcov
-          # Inject GCOV variable for llvm
-          - compiler: llvm
-            GCOV: "llvm-cov gcov"
+          - name: "clang17"
+            pkg: "clang-17 clang-tidy-17 g++-13 libc++-17-dev  libc++1-17 libc++abi-17-dev libc++abi1-17 libunwind-17-dev"
+            toolchain: clang-17
+            os: ubuntu-22.04
+
+
+          - name: "gcc13"
+            pkg: "gcc-13 g++-13"
+            toolchain: gcc-13
+            os: ubuntu-22.04
+
+
+
 
     steps:
       - uses: actions/checkout@v3
         with:
           submodules: recursive
-      - name: Setup Cpp
-        uses: aminya/setup-cpp@v1
-        with:
-          compiler: ${{ matrix.compiler }}
-          vcvarsall: ${{ contains(matrix.os, 'windows') }}
-          cmake: true
-          ninja: true
-          task: true
-          cppcheck: true
-          clangtidy: true # instead of `true`, which chooses the default version, you can pass a specific version.
+
+      - name: Configure APT (llvm)
+        continue-on-error: true
+        if: contains(matrix.pkg, 'clang')
+        run: |
+          sudo apt-add-repository --no-update --yes "deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-17 main"
+          wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key|sudo apt-key add -
+
+      - name: Configure APT
+        continue-on-error: true
+        run: |
+          echo 'APT::Acquire::Retries "5";' | sudo tee -a /etc/apt/apt.conf.d/80-retries > /dev/null
+          sudo add-apt-repository --no-update --yes ppa:ubuntu-toolchain-r/ppa
+          sudo add-apt-repository --no-update --yes ppa:ubuntu-toolchain-r/test
+          wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc | gpg --dearmor - | sudo tee /usr/share/keyrings/kitware-archive-keyring.gpg
+          echo 'deb [signed-by=/usr/share/keyrings/kitware-archive-keyring.gpg] https://apt.kitware.com/ubuntu/ jammy main' | sudo tee /etc/apt/sources.list.d/kitware.list
+          sudo apt-get update
+
+      - name: Install CMake
+        run: sudo apt-get install --yes cmake
+
+      - name: Install Ninja
+        run: sudo apt-get install --yes ninja-build
+
+      - name: Install compiler/tool ${{ matrix.pkg }}
+        run: sudo apt-get install --yes ${{ matrix.pkg }}
 
       - name: Build
         run: |
-          ./bld compile TOOLCHAIN=${{ matrix.compiler }}
+          ./bld compile TOOLCHAIN=${{ matrix.toolchain }}
 
       - name: Test
         run: |
-          ./bld test TOOLCHAIN=${{ matrix.compiler }}
+          ./bld test TOOLCHAIN=${{ matrix.toolchain }}
 
       - name: Test-ASAN
         run: |
-          ./bld test TOOLCHAIN=${{ matrix.compiler }} CONFIG=Asan
+          ./bld test TOOLCHAIN=${{ matrix.toolchain }} CONFIG=Asan
 
       - name: Test-TSAN
         run: |
-          ./bld test TOOLCHAIN=${{ matrix.compiler }} CONFIG=Tsan
+          ./bld test TOOLCHAIN=${{ matrix.toolchain }} CONFIG=Tsan
